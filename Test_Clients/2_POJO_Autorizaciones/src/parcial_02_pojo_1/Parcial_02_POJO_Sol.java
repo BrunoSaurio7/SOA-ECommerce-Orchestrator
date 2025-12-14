@@ -1,0 +1,120 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package parcial_02_pojo_1;
+
+import ws_solicita_autorizacion.ExcepcionNegocio_Exception;
+
+/**
+ *
+ * @author rgamb
+ */
+public class Parcial_02_POJO_Sol implements interfazdesacoplada.InterfazDesacoplada
+{
+    long quienSoy;
+    String host = null;
+    
+    java.util.List<ws_solicita_autorizacion.Cliente>    listaCltes = new java.util.ArrayList<>();
+    java.util.List<ws_solicita_autorizacion.Proveedor>  listaProvs = new java.util.ArrayList<>();
+    
+    int num_cltes;
+    int num_provs;
+
+    @Override
+    public void prepara(long quienSoy)
+    {
+        this.quienSoy = quienSoy;
+        
+        listaCltes    = catalogoClientes();
+        listaProvs    = catalogoProveedores();
+        if (listaCltes != null) num_cltes     = listaCltes.size();
+        if (listaProvs != null) num_provs     = listaProvs.size();
+    }
+
+    @Override
+    public long solicitaServicio(int vez) 
+    {
+       long t0,t1,dt = 0;
+       
+       if (num_cltes == 0 || num_provs == 0) return 0;
+
+       int idClte = (int)(1 + num_cltes * Math.random());
+       int idProv = (int)(1 + num_provs * Math.random());
+       
+       double monto;
+       
+       if (vez <= 5) {
+           monto = 50.0;
+       } else {
+           monto = 9999999.0;
+       }
+
+       int num_aut;
+       t0 = System.currentTimeMillis();
+       try 
+        {    
+            num_aut = solicitaAutorizacion(idClte,idProv,monto);
+
+            t1 = System.currentTimeMillis();
+            
+            dt = t1 - t0;
+            
+            System.out.println("ObjetoDeServicio " + this.quienSoy + " vez:" + vez +
+                          " idClte:" + idClte + ", idProv:" + idProv + 
+                          " Monto:" + monto + " num Autorización:" + num_aut + 
+                          " deltaT:" + dt);
+        }
+        catch (ExcepcionNegocio_Exception ex) 
+        {
+            t1 = System.currentTimeMillis();
+            dt = t1 - t0;
+            System.out.println("Excepcion: para el cliente " + idClte + " con el proveedor " + idProv + " monto " + monto + " " + ex.getLocalizedMessage());
+        }
+       
+       return dt;
+    }
+
+    @Override
+    public void cierra() 
+    {
+        System.out.println("Objeto de servicio " + this.quienSoy + " terminando hilo de carga."); 
+    }
+
+    public static void main(String[] args) 
+    {
+      long quienEres = 25;
+      int VECES = 10;
+      
+      interfazdesacoplada.InterfazDesacoplada objServ = new Parcial_02_POJO_Sol();
+              
+      objServ.prepara(quienEres);
+      
+      for(int vez = 1; vez <= VECES; vez++)
+      {
+          objServ.solicitaServicio(vez);
+      }
+      
+      objServ.cierra();
+    }
+
+    // UTILERÍAS ORIGINALES
+    private static java.util.List<ws_solicita_autorizacion.Cliente> catalogoClientes() {
+        ws_solicita_autorizacion.WSSolicitaAutorizacion_Service service = new ws_solicita_autorizacion.WSSolicitaAutorizacion_Service();
+        ws_solicita_autorizacion.WSSolicitaAutorizacion port = service.getWSSolicitaAutorizacionPort();
+        return port.catalogoClientes();
+    }
+
+    private static java.util.List<ws_solicita_autorizacion.Proveedor> catalogoProveedores() {
+        ws_solicita_autorizacion.WSSolicitaAutorizacion_Service service = new ws_solicita_autorizacion.WSSolicitaAutorizacion_Service();
+        ws_solicita_autorizacion.WSSolicitaAutorizacion port = service.getWSSolicitaAutorizacionPort();
+        return port.catalogoProveedores();
+    }
+
+    private static int solicitaAutorizacion(int idClte, int idProv, double dblMonto) throws ExcepcionNegocio_Exception {
+        ws_solicita_autorizacion.WSSolicitaAutorizacion_Service service = new ws_solicita_autorizacion.WSSolicitaAutorizacion_Service();
+        ws_solicita_autorizacion.WSSolicitaAutorizacion port = service.getWSSolicitaAutorizacionPort();
+        return port.solicitaAutorizacion(idClte, idProv, dblMonto);
+    }
+}
